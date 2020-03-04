@@ -160,7 +160,6 @@ void init_frame(int frame, addr_t vaddr) {
 char *find_physpage(addr_t vaddr, char type) {
 	pgtbl_entry_t *p=NULL; // pointer to the full page table entry for vaddr
 	unsigned idx = PGDIR_INDEX(vaddr); // get index into page directory
-
 	// TODO: IMPLEMENTATION NEEDED------------------------------------------
 
 	// Use top-level page directory to get pointer to 2nd-level page table
@@ -170,7 +169,7 @@ char *find_physpage(addr_t vaddr, char type) {
 	}
 
 	// Use vaddr to get index into 2nd-level page table and initialize 'p'
-	p = (pgtbl_entry_t *) (pgdir[idx].pde & PAGE_MASK);
+	p = ((pgtbl_entry_t *) (pgdir[idx].pde & PAGE_MASK)) + PGTBL_INDEX(vaddr);
 
 	// Check if p is valid or not, on swap or not, and handle appropriately
 	// if p is valid, simply increament hit_count
