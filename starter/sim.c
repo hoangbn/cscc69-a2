@@ -44,7 +44,7 @@ int (*evict_fcn)() = NULL;
  *
  * We then check that the memory has the expected content (just a copy of the
  * virtual address) and, in case of a write reference, increment the version
- * counter. 
+ * counter.
  */
 void access_mem(char type, addr_t vaddr) {
 	char *memptr = find_physpage(vaddr, type);
@@ -52,7 +52,7 @@ void access_mem(char type, addr_t vaddr) {
 	addr_t *checkaddr = (addr_t *)(memptr + sizeof(int));
 
 	if (*checkaddr != vaddr) {
-		fprintf(stderr,"Error, simulated page returned by pagetable lookup doese not have expected value.\n");
+		fprintf(stderr,"Error, simulated page returned by pagetable lookup does not have expected value.\n");
 	}
 	
 	if (type == 'S' || type == 'M') {

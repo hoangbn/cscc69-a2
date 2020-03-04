@@ -52,8 +52,8 @@ typedef struct {
 
 // Page table entry (2nd-level). 
 typedef struct { 
-	unsigned int frame; // if valid bit == 1, physical frame holding vpage
-	off_t swap_off;       // offset in swap file of vpage, if any
+	unsigned int frame;		// if valid bit == 1, physical frame holding vpage
+	off_t swap_off;       	// offset in swap file of vpage, if any
 } pgtbl_entry_t;    
 
 extern void init_pagetable();
