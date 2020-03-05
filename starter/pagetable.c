@@ -241,7 +241,7 @@ void print_pagetbl(pgtbl_entry_t *pgtbl) {
 				printf("in frame %d\n",pgtbl[i].frame >> PAGE_SHIFT);
 			} else {
 				assert(pgtbl[i].frame & PG_ONSWAP);
-				printf("ONSWAP, at offset %lu\n",pgtbl[i].swap_off);
+				printf("ONSWAP, at offset %lld\n",pgtbl[i].swap_off);
 			}			
 		}
 	}
