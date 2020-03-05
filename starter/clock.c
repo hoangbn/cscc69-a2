@@ -30,9 +30,7 @@ int clock_evict() {
 			curr_pte->frame = curr_pte->frame & ~PG_REF;
 			// ...and increment clk_hand to go to next page (in while loop)
 			clk_hand++;
-			if (clk_hand == memsize) {
-				clk_hand = 0;
-			}
+			if (clk_hand == memsize) clk_hand = 0;
 		}
 		// Otherwise, if the ref bit is off
 		else {
@@ -40,9 +38,7 @@ int clock_evict() {
 			int result = clk_hand;
 			// And make sure to increment clk_hand so that we don't get stuck on evicting the same page
 			clk_hand++;
-			if (clk_hand == memsize) {
-				clk_hand = 0;
-			}
+			if (clk_hand == memsize) clk_hand = 0;
 			return result;
 		}
 	}
@@ -55,7 +51,7 @@ int clock_evict() {
 void clock_ref(pgtbl_entry_t *p) {
 	// Since we are accessing page table entry <p>, set its frame's reference bit on
 	// This will give <p> a "second chance" to not be evicted
-	p->frame = p->frame | PG_REF;
+	p->frame = p->frame | PG_REF; // is actually done in pagetable too
 }
 
 /* Initialize any data structures needed for this replacement
