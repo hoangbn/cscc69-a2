@@ -1,3 +1,4 @@
 *.o
 traceprogs/
 sim
+swapfile.*
