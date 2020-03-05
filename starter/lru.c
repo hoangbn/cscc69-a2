@@ -22,7 +22,7 @@ int lru_evict() {
 	// Number of page frame to be evicted.
 	int victim;
 	// Timestamp of page frame to be evicted. Initially, set to timestamp of MOST recently used page frame.
-	int victim_timestamp = counter;
+	double victim_timestamp = counter;
 	// Find LEAST recently used page frame, by finding the page frame with the smallest timestamp.
 	for (int i = 0; i < memsize; i++) {
 		struct frame curr_frame = coremap[i];
@@ -41,7 +41,6 @@ int lru_evict() {
  */
 void lru_ref(pgtbl_entry_t *p) {
 	// Set the "timestamp" field of the frame corresponding to the given PTE to the current "counter" value.
-	struct frame curr_frame = coremap[p->frame >> PAGE_SHIFT];
 	coremap[p->frame >> PAGE_SHIFT].timestamp = counter;
 	// Increment the counter
 	counter++;

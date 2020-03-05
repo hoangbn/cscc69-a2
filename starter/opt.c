@@ -13,42 +13,68 @@ extern int debug;
 
 extern struct frame *coremap;
 
-struct Node { 
-    addr_t vaddr;
-    struct Node* next; 
-}; 
+// node data structure, used to implement a linked list
+// which is used to emulate the trace's list of vaddr's
+typedef struct listnode {
+	addr_t vaddr;
+	struct listnode* next;
+} node;
 
-struct Node* head = NULL;
+// <head> is the head of the linked list of nodes representing the trace's list of instruction addresses
+node* head;
+
+// Given a virtual address, measures how long until the address is referenced again
+int evict_helper(addr_t curr_addr) {
+	node* curr = head;
+	// <next_use> = number of references before <curr_addr> is referenced again
+	int next_use = 0;
+	// Loop through the linked list of nodes starting at <head>
+	while (curr != NULL) {
+		// If the given address is found in the current node's <vaddr> field
+		if (curr_addr == curr->vaddr) {
+			// We have found the "next use" of the address, so return it
+			return next_use;
+		}
+		// Increment the number of references seen so far
+		next_use++;
+		// Move onto next node
+		curr = curr->next;
+	}
+	// If we passed through the entire while loop and haven't found the given address, then the address is never referenced again.
+	// Therefore, set <next_use> to -1 to represent this.
+	next_use = -1;
+	return next_use;
+}
+
 /* Page to evict is chosen using the optimal (aka MIN) algorithm. 
  * Returns the page frame number (which is also the index in the coremap)
  * for the page that is to be evicted.
  */
 int opt_evict() {
-	int evict_frame = 0; // default value to return (if no page will be used again)
-	int farthest_num = 0;
+	// <victim> is the page frame number of the frame that is referenced again the latest
+	int victim = 0;
+	// <latest> measures the number of references to the latest "next reference" of any frame in coremap
+	int latest = 0;
+	// For each frame in coremap
 	for (int i = 0; i < memsize; i++) {
-		printf("YO\n");
-		// check to see if vaddr at current frame will ever appear again
-		// if yes, compare it to current furthest, update if necessary
-		addr_t cur_frame_vaddr = coremap[i].vaddr;
-		struct Node *current = head->next; // head contains vaddr that we're trying to use to access physmem
-		int cur_farthest_num = 0;
-		while (current != NULL) {
-			if (current->vaddr != cur_frame_vaddr) {
-				cur_farthest_num++;
-				current = current->next;
-			}
-			else break;
+		// Measure the number of references until the frame is referenced again
+		int curr_next_use = evict_helper(coremap[i].vaddr);
+		// If the number of references is greater than the latest
+		if (curr_next_use > latest) {
+			// Update the <latest> value
+			latest = curr_next_use;
+			// Set <victim> to be the current frame number, since the current frame has the latest "next reference"
+			victim = i;
 		}
-		// if we reached the end of list, we found the page that will never get used again
-		if (current == NULL) return i;
-		// else, check if this page appears further than currently furthest frame and update
-		if (cur_farthest_num > farthest_num) {
-			farthest_num = cur_farthest_num;
-			evict_frame = i;
+		// Also, check if the frame is never referenced again (<curr_next_use> == -1)
+		else if (curr_next_use == -1) {
+			// If this is the case, then the current frame is the best possible eviction
+			// Therefore, set <victim> to the current frame number <i>, and stop looping
+			victim = i;
+			break;
 		}
 	}
-	return evict_frame;
+	return victim;
 }
 
 /* This function is called on each access to a page to update any information
@@ -56,48 +82,54 @@ int opt_evict() {
  * Input: The page table entry for the page that is being accessed.
  */
 void opt_ref(pgtbl_entry_t *p) {
-	// Set the "vaddr" field of the frame corresponding to the given PTE
-	struct frame curr_frame = coremap[p->frame >> PAGE_SHIFT];
-	curr_frame.vaddr = head->vaddr;
-	// move to next node in our linked list because the vaddr at head was just accessed
+	// Move head to the next node in the list, and free the node prior
+	node* to_free = head;
 	head = head->next;
-	return;
+	free(to_free);
 }
 
 /* Initializes any data structures needed for this
  * replacement algorithm.
  */
 void opt_init() {
-	FILE *infp = fopen(tracefile, "r");
-	char buf[MAXLINE];
-	char _;
-	struct Node* current = NULL;
-	struct Node* next;
-	addr_t vaddr = 0;
-	// initialize head of linked list containing future vaddrs
-	while (fgets(buf, MAXLINE, infp) != NULL) {
-		if (buf[0] != '=') {
-			sscanf(buf, "%c %lx", &_, &vaddr);
-			head = (struct Node*)malloc(sizeof(struct Node));
-			head->vaddr = vaddr;
-			current = head;
-			break;
-		} else {
-			continue;
-		}
-	}
-	// create linked list of nodes containing future vaddrs
-	while(fgets(buf, MAXLINE, infp) != NULL) {
-		if(buf[0] != '=') {
-			sscanf(buf, "%c %lx", &_, &vaddr);
-			next = (struct Node*)malloc(sizeof(struct Node));
-			next->vaddr = vaddr;
-			printf("%lu\n", vaddr);
-			current->next = next;
-			current = next;
-		} else {
-			continue;
-		}
-	}
-}
+	// Similar to the "replay_trace()" function in "sim.c",
+	// we want to replay the trace and initialize data structures based on the data found
 
+	FILE *fp = fopen(tracefile, "r");
+
+	if (fp == NULL) {
+		perror("Error opening tracefile for OPT page replacement algorithm.");
+		exit(1);
+	}
+
+	char buffer[MAXLINE];
+	addr_t vaddr;
+	char type;
+
+	node* curr = NULL;
+
+	while (fgets(buffer, MAXLINE, fp) != NULL) {
+		sscanf(buffer, "%c %lx", &type, &vaddr);
+
+		// Create a node <new_node> to represent the vaddr found on the current line
+		node* new_node = malloc(sizeof(node));
+
+		new_node->next = NULL;
+		new_node->vaddr = vaddr;
+
+		// If <head> hasn't been set yet...
+		if (head == NULL) {
+			// ...then set <head> to <new_node>
+			head = new_node;
+			// the current node we are manipulating is the head, so set <curr> to <head>
+			curr = head;
+		// Otherwise, if <curr> has been set previously...
+		} else if (curr != NULL) {
+			// ...set <curr>'s next node to the <new_node> instead
+			curr->next = new_node;
+			// Move <curr> onto next node for next iteration of while loop
+			curr = curr->next;
+		}
+	}
+	fclose(fp);
+}
