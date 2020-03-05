@@ -42,8 +42,7 @@ int lru_evict() {
  */
 void lru_ref(pgtbl_entry_t *p) {
 	// Set the "timestamp" field of the frame corresponding to the given PTE to the current "counter" value.
-	struct frame curr_frame = coremap[p->frame >> PAGE_SHIFT];
-	curr_frame.timestamp = counter;
+	coremap[p->frame >> PAGE_SHIFT].timestamp = counter;
 	// Increment the counter
 	counter++;
 }

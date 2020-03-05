@@ -178,6 +178,8 @@ char *find_physpage(addr_t vaddr, char type) {
 	else {
 		// alocate frame
 		int frame = allocate_frame(p);
+		// save vaddr (used in OPT algo)
+		coremap[frame].vaddr = vaddr;
 		// if p is swapped
 		if (p->frame & PG_ONSWAP) {
 			// fill frame with data from swap (on error exit)
