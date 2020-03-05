@@ -66,7 +66,7 @@ struct frame {
 	pgtbl_entry_t *pte;// Pointer back to pagetable entry (pte) for page
 	                   // stored in this frame
 
-	int timestamp; // Timestamp to indicate when this frame was last referenced (used for LRU algorithm)
+	double timestamp; // Timestamp to indicate when this frame was last referenced (used for LRU algorithm)
 	addr_t vaddr;  // vaddr stored in this page frame (used for OPT algorithm)
 };
 

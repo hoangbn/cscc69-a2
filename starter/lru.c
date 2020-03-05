@@ -12,7 +12,7 @@ extern int debug;
 
 extern struct frame *coremap;
 
-int counter;
+double counter;
 
 /* Page to evict is chosen using the accurate LRU algorithm.
  * Returns the page frame number (which is also the index in the coremap)
@@ -23,7 +23,7 @@ int lru_evict() {
 	// Number of page frame to be evicted.
 	int victim;
 	// Timestamp of page frame to be evicted. Initially, set to timestamp of MOST recently used page frame.
-	int victim_timestamp = counter;
+	double victim_timestamp = counter;
 	// Find LEAST recently used page frame, by finding the page frame with the smallest timestamp.
 	for (int i = 0; i < memsize; i++) {
 		struct frame curr_frame = coremap[i];
