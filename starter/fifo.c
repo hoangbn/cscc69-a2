@@ -19,14 +19,13 @@ int victim;
  * for the page that is to be evicted.
  */
 int fifo_evict() {
-
+	// since frames are used in order from index 0 up to memsize, the first victim
+	// would be the first frame - 0, next one would simply be next index
 	int result = victim;
-
 	victim++;
 	if (victim == memsize) {
 		victim = 0;
 	}
-
 	return result;
 }
 
@@ -35,7 +34,7 @@ int fifo_evict() {
  * Input: The page table entry for the page that is being accessed.
  */
 void fifo_ref(pgtbl_entry_t *p) {
-
+	// not needed because we're simply increamenting a variable after finding the victim
 	return;
 }
 
@@ -43,6 +42,5 @@ void fifo_ref(pgtbl_entry_t *p) {
  * replacement algorithm 
  */
 void fifo_init() {
-
 	victim = 0;
 }

@@ -62,12 +62,12 @@ extern char *find_physpage(addr_t vaddr, char type);
 extern void print_pagedirectory(void);
 
 struct frame {
-	char in_use;       // True if frame is allocated, False if frame is free
-	pgtbl_entry_t *pte;// Pointer back to pagetable entry (pte) for page
-	                   // stored in this frame
+	char in_use;       	// True if frame is allocated, False if frame is free
+	pgtbl_entry_t *pte;	// Pointer back to pagetable entry (pte) for page
+	                   	// stored in this frame
 
-	double timestamp; // Timestamp to indicate when this frame was last referenced (used for LRU algorithm)
-	addr_t vaddr;  // vaddr stored in this page frame (used for OPT algorithm)
+	double timestamp; 		// Timestamp to indicate when this frame was last referenced (used for LRU algorithm)
+	addr_t vaddr;			// vaddr used to allocate the frame (used for OPT algorithm)
 };
 
 /* The coremap holds information about physical memory.

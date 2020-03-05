@@ -62,6 +62,7 @@ int allocate_frame(pgtbl_entry_t *p) {
 			// Page has been evicted to swap, so set PG_ONSWAP bit on
 			victim_pte->frame = victim_pte->frame | PG_ONSWAP;
 		} else {
+			// if not dirty we do not have to swap it out
 			evict_clean_count++;
 		}
 		// Victim frame is no longer in physical memory, so set PG_VALID bit off
