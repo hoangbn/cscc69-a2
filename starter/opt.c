@@ -25,7 +25,7 @@ node* head;
 
 // Given a virtual address, measures how long until the address is referenced again
 int evict_helper(addr_t curr_addr) {
-	node* curr = head;
+	node* curr = head->next; // head contains vaddr that's running now
 	// <next_use> = number of references before <curr_addr> is referenced again
 	int next_use = 0;
 	// Loop through the linked list of nodes starting at <head>
@@ -42,8 +42,7 @@ int evict_helper(addr_t curr_addr) {
 	}
 	// If we passed through the entire while loop and haven't found the given address, then the address is never referenced again.
 	// Therefore, set <next_use> to -1 to represent this.
-	next_use = -1;
-	return next_use;
+	return -1;
 }
 
 /* Page to evict is chosen using the optimal (aka MIN) algorithm. 
@@ -83,6 +82,8 @@ int opt_evict() {
  */
 void opt_ref(pgtbl_entry_t *p) {
 	// Move head to the next node in the list, and free the node prior
+	// Set the "vaddr" field of the frame corresponding to the given PTE
+	coremap[p->frame >> PAGE_SHIFT].vaddr = head->vaddr;
 	node* to_free = head;
 	head = head->next;
 	free(to_free);
@@ -109,26 +110,30 @@ void opt_init() {
 	node* curr = NULL;
 
 	while (fgets(buffer, MAXLINE, fp) != NULL) {
-		sscanf(buffer, "%c %lx", &type, &vaddr);
+		if (buffer[0] != '=') {
+			sscanf(buffer, "%c %lx", &type, &vaddr);
 
-		// Create a node <new_node> to represent the vaddr found on the current line
-		node* new_node = malloc(sizeof(node));
+			// Create a node <new_node> to represent the vaddr found on the current line
+			node* new_node = malloc(sizeof(node));
 
-		new_node->next = NULL;
-		new_node->vaddr = vaddr;
+			new_node->next = NULL;
+			new_node->vaddr = vaddr;
 
-		// If <head> hasn't been set yet...
-		if (head == NULL) {
-			// ...then set <head> to <new_node>
-			head = new_node;
-			// the current node we are manipulating is the head, so set <curr> to <head>
-			curr = head;
-		// Otherwise, if <curr> has been set previously...
-		} else if (curr != NULL) {
-			// ...set <curr>'s next node to the <new_node> instead
-			curr->next = new_node;
-			// Move <curr> onto next node for next iteration of while loop
-			curr = curr->next;
+			// If <head> hasn't been set yet...
+			if (head == NULL) {
+				// ...then set <head> to <new_node>
+				head = new_node;
+				// the current node we are manipulating is the head, so set <curr> to <head>
+				curr = head;
+			// Otherwise, if <curr> has been set previously...
+			} else {
+				// ...set <curr>'s next node to the <new_node> instead
+				curr->next = new_node;
+				// Move <curr> onto next node for next iteration of while loop
+				curr = curr->next;
+			}
+		} else {
+			continue;
 		}
 	}
 	fclose(fp);
